@@ -1,30 +1,35 @@
-# use node.js LTS version as a base image
-FROM node:24-alpine AS builder
+# Use Node.js LTS version as base image
+FROM node:20-alpine AS builder
 
-# set working directory
+
+# Set working directory
 WORKDIR /app
 
-# copy package.json and package-lock.json to the working directory
+# Copy package.json and package-lock.json (if exists)
 COPY package*.json ./
 
-# install dependencies
-RUN npm ci
+# Install dependencies
+RUN npm install
 
-# copy the rest of the application code to the working directory
+
+# Copy the rest of the application code
 COPY . .
 
-# build the application
+# Build the Vite app for production
 RUN npm run build
 
 
-# use nginx as a base image for serving the application
+# Use a lightweight web server to serve the built app
 FROM nginx:alpine
 
-#copy the built app to Nginx default directory
+
+# Copy the build output to Nginx's default public directory
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80 
 
-# start nginx
-CMD ["nginx", "-g", "daemon off"]
+# Expose port 80
+EXPOSE 80
+
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
