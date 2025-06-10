@@ -1,20 +1,21 @@
-# Use official Node.js LTS image as base
-FROM node:20-alpine
+# Build stage
+FROM node:20-alpine AS build
 
-# Set working directory inside container
 WORKDIR /app
 
-# Copy package files first for caching npm install
 COPY package*.json ./
 
-# Install dependencies
 RUN npm install
 
-# Copy all app source code
 COPY . .
 
-# Expose port your app runs on (adjust if needed)
-EXPOSE 3000
+RUN npm run build
 
-# Command to run your app
-CMD ["npm", "start"]
+# Production stage
+FROM nginx:stable-alpine
+
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
